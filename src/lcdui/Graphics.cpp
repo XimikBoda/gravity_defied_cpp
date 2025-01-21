@@ -49,17 +49,13 @@ void Graphics::setClip(int x, int y, int w, int h)
 {
     auto view = renderer->getDefaultView();
     auto size = renderer->getSize();
-    float rw = size.x, rh = size.y;
-    float fx = (float)x / rw, fy = (float)y / rh;
-    float fw = (float)w / rw, fh = (float)h / rh;
-    if (fx < 0) fw += fx, fx = 0;
-    if (fy < 0) fh += fy, fy = 0;
-    if (fx >= 1) fx = 1, fw = 0;
-    if (fy >= 1) fy = 1, fh = 0;
-    if (fw < 0) fw = 0;
-    if (fh < 0) fh = 0;
-    if (fx + fw > 1) fw = 1 - fx;
-    if (fy + fh > 1) fh = 1 - fy;
+    float rw = static_cast<float>(size.x);
+    float rh = static_cast<float>(size.y);
+
+    float fx = std::clamp(static_cast<float>(x) / rw, 0.0f, 1.0f);
+    float fy = std::clamp(static_cast<float>(y) / rh, 0.0f, 1.0f);
+    float fw = std::clamp(static_cast<float>(w) / rw + fx, 0.0f, 1.0f) - fx;
+    float fh = std::clamp(static_cast<float>(h) / rh + fy, 0.0f, 1.0f) - fy;
 
     view.setScissor(sf::FloatRect({ fx, fy }, { fw, fh }));
     renderer->setView(view);
