@@ -6,27 +6,19 @@ CMRC_DECLARE(assets);
 
 Font::Font(FontStyle style, FontSize pointSize)
 {
-    if (!ttfRwOps) {
+    if (!font.hasGlyph('0')) {
         cmrc::embedded_filesystem internalFs = cmrc::assets::get_filesystem();
         cmrc::file fileData = internalFs.open("FontSansSerif.ttf");
-        SDL_RWops* raw = SDL_RWFromConstMem(fileData.begin(), fileData.size());
-        if (!raw) {
-            throw std::runtime_error(SDL_GetError());
-        }
-
-        ttfRwOps = raw;
+        font.openFromMemory(fileData.begin(), fileData.size());
     }
 
-    int realSize = getRealFontSize(pointSize);
-    TTF_Font* font = TTF_OpenFontRW(ttfRwOps, SDL_TRUE, realSize);
-    TTF_SetFontStyle(font, style);
-    this->ttfFont = font;
-    this->height = realSize;
+    this->style = style;
+    this->pointSize = pointSize;
+    this->height = getRealFontSize(pointSize);
 }
 
 Font::~Font()
 {
-    TTF_CloseFont(ttfFont);
 }
 
 int Font::getBaselinePosition() const
@@ -39,9 +31,12 @@ int Font::getHeight() const
     return height;
 }
 
-TTF_Font* Font::getTtfFont() const
+sf::Text Font::getTtfFont() const
 {
-    return ttfFont;
+    int realSize = getRealFontSize(pointSize);
+    sf::Text text(font, "", realSize);
+    text.setStyle(style);
+    return text;
 }
 
 int Font::charWidth(char c)
@@ -52,9 +47,9 @@ int Font::charWidth(char c)
 int Font::stringWidth(const std::string& s)
 {
     int width, height;
-    if (TTF_SizeText(ttfFont, s.c_str(), &width, &height) == -1)
-        throw std::runtime_error(TTF_GetError());
-    return width;
+    sf::Text text = getTtfFont(); 
+    text.setString(s);
+    return text.getLocalBounds().size.x;
 }
 
 int Font::substringWidth(const std::string& string, int offset, int len)

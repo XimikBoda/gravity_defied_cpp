@@ -3,6 +3,11 @@ project(gravity_defied_cpp C CXX)
 
 unset(ENV{PKG_CONFIG_PATH})
 
+set(BUILD_SHARED_LIBS FALSE)
+set(SFML_BUILD_AUDIO FALSE)
+set(SFML_BUILD_NETWORK FALSE)
+add_subdirectory(SFML)
+
 # Create a sources variable with a link to all cpp files to compile
 set(SOURCES
     src/utils/Time.cpp
@@ -62,7 +67,9 @@ endif()
 add_executable(GravityDefied ${SOURCES})
 
 target_compile_features(GravityDefied PRIVATE cxx_std_17)
-target_compile_options(GravityDefied PRIVATE -Wall -Wextra)
+
+target_link_libraries(GravityDefied SFML::Graphics SFML::Window)
+target_link_libraries(GravityDefied Assets::Assets)
 
 
 # Copy assets to the build directory

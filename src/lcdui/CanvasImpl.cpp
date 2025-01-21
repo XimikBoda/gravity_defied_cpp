@@ -1,8 +1,6 @@
 #include "CanvasImpl.h"
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_ttf.h>
+
 #include <stdexcept>
 #include <iostream>
 
@@ -12,52 +10,18 @@ CanvasImpl::CanvasImpl(Canvas* canvas)
 {
     this->canvas = canvas;
 
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        throw std::runtime_error(SDL_GetError());
-    }
+    window.create(sf::VideoMode(sf::Vector2u(width, height)), "", sf::Style::Titlebar | sf::Style::Close);
 
-    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
-        throw std::runtime_error(IMG_GetError());
-    }
-
-    if (TTF_Init() == -1) {
-        throw std::runtime_error(TTF_GetError());
-    }
-
-    window = SDL_CreateWindow(
-        0,
-        SDL_WINDOWPOS_UNDEFINED,
-        SDL_WINDOWPOS_UNDEFINED,
-        width, height,
-        SDL_WINDOW_SHOWN);
-
-    if (!window) {
-        throw std::runtime_error(SDL_GetError());
-    }
-
-    renderer = SDL_CreateRenderer(
-        window, -1, SDL_RENDERER_ACCELERATED);
-
-    if (!renderer) {
-        throw std::runtime_error(SDL_GetError());
-    }
-
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderClear(renderer);
+    window.clear(sf::Color(255, 255, 255, 255));
 }
 
 CanvasImpl::~CanvasImpl()
 {
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    IMG_Quit();
-    TTF_Quit();
 }
 
 void CanvasImpl::repaint()
 {
-    SDL_RenderPresent(renderer);
+    window.display();
 }
 
 int CanvasImpl::getWidth()
@@ -70,66 +34,57 @@ int CanvasImpl::getHeight()
     return height;
 }
 
-SDL_Renderer* CanvasImpl::getRenderer()
+sf::RenderTarget* CanvasImpl::getRenderer()
 {
-    return renderer;
+    return &window;
 }
 
 void CanvasImpl::processEvents()
 {
-    SDL_Event e;
-
-    while (SDL_PollEvent(&e) != 0) {
-        switch (e.type) {
-        case SDL_QUIT:
+    while (const std::optional event = window.pollEvent()){
+        if (event->is<sf::Event::Closed>()) {
             exit(0); // IMPROVE This is a super dumb way to finish the game, but it works
-            break;
-        case SDL_KEYDOWN: {
-            int keyCode = convertKeyCharToKeyCode(e.key.keysym.sym);
+        } else if (const auto* key = event->getIf<sf::Event::KeyPressed>()) {
+            int keyCode = convertKeyCharToKeyCode(key->code);
             // std::cout << "Key pressed: " << keyCode << std::endl;
             if (keyCode != 0) {
                 canvas->publicKeyPressed(keyCode);
             }
-        } break;
-        case SDL_KEYUP: {
-            int sdlCode = e.key.keysym.sym;
-            int keyCode = convertKeyCharToKeyCode(sdlCode);
+        } else if (const auto* key = event->getIf<sf::Event::KeyReleased>()) {
+            int keyCode = convertKeyCharToKeyCode(key->code);
             // std::cout << "Key released: " << keyCode << std::endl;
             if (keyCode != 0) {
                 canvas->publicKeyReleased(keyCode);
             } else {
-                if (sdlCode == SDLK_ESCAPE) {
+                if (key->code == sf::Keyboard::Key::Escape) {
                     // std::cout << "ESC released" << std::endl;
                     canvas->pressedEsc();
                 }
             }
-        } break;
-        default:
-            break;
         }
     }
 }
 
-int CanvasImpl::convertKeyCharToKeyCode(SDL_Keycode keyCode)
+int CanvasImpl::convertKeyCharToKeyCode(sf::Keyboard::Key keyCode)
 {
     switch (keyCode) {
-    case SDLK_RETURN:
+    case sf::Keyboard::Key::Enter:
         return Canvas::Keys::FIRE;
-    case SDLK_LEFT:
+    case sf::Keyboard::Key::Left:
         return Canvas::Keys::LEFT;
-    case SDLK_RIGHT:
+    case sf::Keyboard::Key::Right:
         return Canvas::Keys::RIGHT;
-    case SDLK_UP:
+    case sf::Keyboard::Key::Up:
         return Canvas::Keys::UP;
-    case SDLK_DOWN:
+    case sf::Keyboard::Key::Down:
         return Canvas::Keys::DOWN;
     default:
-        std::cout << "unknown keyEvent: " << keyCode << std::endl;
+        std::cout << "unknown keyEvent: " << (int)keyCode << std::endl;
         return 0;
     }
 }
 
 void CanvasImpl::setWindowTitle(const std::string& title)
 {
-    SDL_SetWindowTitle(window, title.c_str());
+    window.setTitle(title);
 }

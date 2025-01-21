@@ -1,9 +1,9 @@
 #pragma once
 
 #include <string>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
 
+#include <SFML/Graphics/Font.hpp>
+#include <SFML/Graphics/Text.hpp>
 #include <cmrc/cmrc.hpp>
 
 class Font {
@@ -15,9 +15,9 @@ public:
     };
 
     enum FontStyle {
-        STYLE_PLAIN = TTF_STYLE_NORMAL,
-        STYLE_BOLD = TTF_STYLE_BOLD,
-        STYLE_ITALIC = TTF_STYLE_ITALIC
+        STYLE_PLAIN = sf::Text::Style::Regular,
+        STYLE_BOLD = sf::Text::Style::Bold,
+        STYLE_ITALIC = sf::Text::Style::Italic
     };
 
     enum FontFace {
@@ -29,14 +29,15 @@ public:
 
     int getBaselinePosition() const;
     int getHeight() const;
-    TTF_Font* getTtfFont() const;
+    sf::Text getTtfFont() const;
     int charWidth(char c);
     int stringWidth(const std::string& s);
     int substringWidth(const std::string& string, int offset, int len);
 
 private:
-    static inline SDL_RWops* ttfRwOps = nullptr;
-    TTF_Font* ttfFont;
+    static inline sf::Font font;
+    FontStyle style;
+    FontSize pointSize;
     int height;
 
     static int getRealFontSize(FontSize size);

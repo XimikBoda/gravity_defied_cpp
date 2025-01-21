@@ -2,9 +2,8 @@
 
 #include <memory>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_ttf.h>
+#include <SFML/Window.hpp>
+#include <SFML/Graphics.hpp>
 
 class Canvas;
 
@@ -12,13 +11,12 @@ class CanvasImpl {
 private:
     Canvas* canvas;
 
-    SDL_Window* window;
-    SDL_Renderer* renderer;
+    sf::RenderWindow window;
 
     const int width = 640;
     const int height = 480;
 
-    static int convertKeyCharToKeyCode(SDL_Keycode keyCode);
+    static int convertKeyCharToKeyCode(sf::Keyboard::Key keyCode);
 
 public:
     CanvasImpl(Canvas* canvas);
@@ -28,7 +26,7 @@ public:
     int getWidth();
     int getHeight();
 
-    SDL_Renderer* getRenderer();
+    sf::RenderTarget* getRenderer();
     void processEvents();
     void setWindowTitle(const std::string& title);
 };

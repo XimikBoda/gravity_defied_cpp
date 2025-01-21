@@ -1,6 +1,7 @@
 #include "time.h"
 
-#include <SDL2/SDL.h>
+#include <SFML/System/Sleep.hpp>
+#include <SFML/System/Time.hpp>
 #include <chrono>
 
 namespace Time {
@@ -12,6 +13,6 @@ int64_t currentTimeMillis()
 
 void sleep(int64_t ms)
 {
-    SDL_Delay(ms);
+    sf::sleep(sf::milliseconds(ms));
 }
 }

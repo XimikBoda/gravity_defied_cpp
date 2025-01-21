@@ -4,21 +4,20 @@
 #include <algorithm>
 #include <filesystem>
 
-class FileStream : std::fstream {
+class FileStream {
 public:
     FileStream()
-        : std::fstream()
     {
     }
 
     FileStream(const std::filesystem::path& file, std::ios::openmode mode)
-        : std::fstream(file, mode)
     {
+        stream.open(file, mode);
     }
 
     ~FileStream()
     {
-        std::fstream::close();
+        stream.close();
     }
 
     template <class T>
@@ -46,22 +45,24 @@ public:
 
     virtual bool isOpen()
     {
-        return std::fstream::is_open();
+        return stream.is_open();
     }
 
     virtual void setPos(std::streampos pos)
     {
-        std::fstream::seekg(pos);
+        stream.seekg(pos);
     }
 
 private:
+    std::fstream stream;
+
     virtual void read_impl(char* s, std::streamsize n)
     {
-        std::fstream::read(s, n);
+        stream.read(s, n);
     }
 
     virtual void write_impl(char* s, std::streamsize n)
     {
-        std::fstream::write(s, n);
+        stream.write(s, n);
     }
 };

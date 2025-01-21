@@ -1,11 +1,11 @@
 #pragma once
 
 #include <string>
-#include <SDL2/SDL.h>
+#include <SFML/Graphics/Texture.hpp>
 
 class Image {
 private:
-    SDL_Surface* surface;
+    sf::Texture surface;
 
 public:
     Image(const std::string& embeddedPath);
@@ -14,5 +14,5 @@ public:
 
     int getWidth() const;
     int getHeight() const;
-    SDL_Surface* getSurface() const;
+    const sf::Texture* getSurface() const;
 };

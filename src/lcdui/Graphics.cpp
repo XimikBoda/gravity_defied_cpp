@@ -1,7 +1,9 @@
 #include "Graphics.h"
 #include <memory>
 
-Graphics::Graphics(SDL_Renderer* renderer)
+#include <SFML/Graphics.hpp>
+
+Graphics::Graphics(sf::RenderTarget* renderer)
 {
     this->renderer = renderer;
     this->currentColor = { 0, 0, 0, 255 };
@@ -10,21 +12,19 @@ Graphics::Graphics(SDL_Renderer* renderer)
 
 void Graphics::drawString(const std::string& s, int x, int y, int anchor)
 {
-    SDL_Surface* surfaceMessage = TTF_RenderText_Blended(font->getTtfFont(), s.c_str(), currentColor);
-    SDL_Texture* message = SDL_CreateTextureFromSurface(renderer, surfaceMessage);
+    auto text = font->getTtfFont();
+    text.setString(s);
+    text.setFillColor(currentColor);
 
-    int width, height;
-    if (TTF_SizeText(font->getTtfFont(), s.c_str(), &width, &height) == -1)
-        throw std::runtime_error(TTF_GetError());
+    int width = text.getLocalBounds().size.x;
+    int height = text.getLocalBounds().size.y;
 
     x = getAnchorX(x, width, anchor);
     y = getAnchorY(y, height, anchor);
-    SDL_Rect dstRect { x, y, width, height };
 
-    SDL_RenderCopy(renderer, message, nullptr, &dstRect);
+    text.setPosition(sf::Vector2f(x, y));
 
-    SDL_FreeSurface(surfaceMessage);
-    SDL_DestroyTexture(message);
+    renderer->draw(text);
 }
 
 void Graphics::setColor(int r, int g, int b)
@@ -33,7 +33,6 @@ void Graphics::setColor(int r, int g, int b)
     currentColor.g = g;
     currentColor.b = b;
     currentColor.a = 255;
-    SDL_SetRenderDrawColor(renderer, (Uint8)r, (Uint8)g, (Uint8)b, 255);
 }
 
 void Graphics::setFont(std::shared_ptr<Font> font)
@@ -48,8 +47,22 @@ std::shared_ptr<Font> Graphics::getFont() const
 
 void Graphics::setClip(int x, int y, int w, int h)
 {
-    SDL_Rect clipRect { x, y, w, h };
-    SDL_RenderSetClipRect(renderer, &clipRect);
+    auto view = renderer->getDefaultView();
+    auto size = renderer->getSize();
+    float rw = size.x, rh = size.y;
+    float fx = (float)x / rw, fy = (float)y / rh;
+    float fw = (float)w / rw, fh = (float)h / rh;
+    if (fx < 0) fw += fx, fx = 0;
+    if (fy < 0) fh += fy, fy = 0;
+    if (fx >= 1) fx = 1, fw = 0;
+    if (fy >= 1) fy = 1, fh = 0;
+    if (fw < 0) fw = 0;
+    if (fh < 0) fh = 0;
+    if (fx + fw > 1) fw = 1 - fx;
+    if (fy + fh > 1) fh = 1 - fy;
+
+    view.setScissor(sf::FloatRect({ fx, fy }, { fw, fh }));
+    renderer->setView(view);
 }
 
 void Graphics::drawChar(char c, int x, int y, int anchor)
@@ -59,8 +72,11 @@ void Graphics::drawChar(char c, int x, int y, int anchor)
 
 void Graphics::fillRect(int x, int y, int w, int h)
 {
-    SDL_Rect rect { x, y, w, h };
-    SDL_RenderFillRect(renderer, &rect);
+    sf::RectangleShape rect;
+    rect.setPosition(sf::Vector2f(x, y));
+    rect.setSize(sf::Vector2f(w, h));
+    rect.setFillColor(currentColor);
+    renderer->draw(rect);
 }
 
 /**
@@ -225,22 +241,25 @@ void Graphics::fillArc(int x, int y, int w, int h, int startAngle, int arcAngle)
 
 void Graphics::_putpixel(int x, int y)
 {
-    SDL_RenderDrawPoint(renderer, x, y);
 }
 
 void Graphics::drawLine(int x1, int y1, int x2, int y2)
 {
-    SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
+    std::array line = {
+        sf::Vertex { sf::Vector2f(x1, y1), currentColor },
+        sf::Vertex { sf::Vector2f(x2, y2), currentColor }
+    };
+
+    renderer->draw(line.data(), line.size(), sf::PrimitiveType::Lines);
 }
 
 void Graphics::drawImage(Image* const image, int x, int y, int anchor)
 {
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, image->getSurface());
     x = getAnchorX(x, image->getWidth(), anchor);
     y = getAnchorY(y, image->getHeight(), anchor);
-    SDL_Rect dstRect { x, y, image->getWidth(), image->getHeight() };
-    SDL_RenderCopy(renderer, texture, 0, &dstRect);
-    SDL_DestroyTexture(texture);
+    sf::Sprite sp(*image->getSurface());
+    sp.setPosition(sf::Vector2f(x, y));
+    renderer->draw(sp);
 }
 
 int Graphics::getAnchorX(int x, int size, int anchor)
