@@ -55,6 +55,7 @@ cmrc_add_resource_library(Assets
     assets/engine.png
     assets/splash.png
     assets/raster.png
+    assets/icon.png
     assets/FontSansSerif.ttf
 )
 

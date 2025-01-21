@@ -6,12 +6,25 @@
 
 #include "Canvas.h"
 
+#include <cmrc/cmrc.hpp>
+
+CMRC_DECLARE(assets);
+
 CanvasImpl::CanvasImpl(Canvas* canvas)
 {
     this->canvas = canvas;
 
-    window.create(sf::VideoMode(sf::Vector2u(width, height)), "", sf::Style::Titlebar | sf::Style::Close);
+    sf::Image icon;
+    {
+        cmrc::embedded_filesystem embeddedFs = cmrc::assets::get_filesystem();
+        cmrc::file fileData = embeddedFs.open("icon.png");
 
+        icon.loadFromMemory(fileData.begin(), fileData.size());
+    }
+
+    window.create(sf::VideoMode(sf::Vector2u(width, height)), "", sf::Style::Titlebar | sf::Style::Close);
+    window.setIcon(icon);
+    
     window.clear(sf::Color(255, 255, 255, 255));
 }
 
