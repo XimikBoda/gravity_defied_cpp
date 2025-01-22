@@ -17,7 +17,7 @@ void Graphics::drawString(const std::string& s, int x, int y, int anchor)
     text.setFillColor(currentColor);
 
     int width = text.getLocalBounds().size.x;
-    int height = text.getLocalBounds().size.y;
+    int height = font->getHeight();
 
     x = getAnchorX(x, width, anchor);
     y = getAnchorY(y, height, anchor);
